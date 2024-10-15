@@ -1,9 +1,13 @@
 import {createLocalizedPathnamesNavigation} from 'next-intl/navigation';
 import {defineRouting} from 'next-intl/routing';
 
-export const routing = defineRouting({
+export const i18Config = {
   locales: ['ru', 'en', 'de'],
-  defaultLocale: 'ru',
+  defaultLocale: 'ru'
+};
+
+export const routing = defineRouting({
+  ...i18Config,
   localePrefix: 'as-needed',
   pathnames: {
     '/': '/',
@@ -15,17 +19,18 @@ export const routing = defineRouting({
   },
   domains: [
     {
-      domain: 'intl-next-test.vercel.app',
+      domain: `${process.env.RUSSIAN_URL}`,
       defaultLocale: 'ru'
     },
     {
-      domain: 'intl-next-test-global.vercel.app',
+      domain: `${process.env.GLOBAL_URL}`,
       locales: ['en', 'de'],
       defaultLocale: 'en'
     }
   ]
 });
 
+export type I18nConfig = typeof i18Config;
 export type Pathnames = keyof typeof routing.pathnames;
 export type Locale = (typeof routing.locales)[number];
 
