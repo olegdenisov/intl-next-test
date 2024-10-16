@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
   const {defaultLocale, locales} = i18Config;
 
   const pathname = request.nextUrl.pathname;
-  const nextHostName = request.nextUrl.hostname;
+  // const nextHostName = request.nextUrl.hostname;
   // const local = request.nextUrl.locale;
   const requestURL = new URL(request.url);
 
@@ -50,7 +50,8 @@ export function middleware(request: NextRequest) {
 
   if (pathLocale) {
     const isDefaultLocale = pathLocale === defaultLocale;
-    let pathWithoutLocale = pathname.slice(`/${pathLocale}`.length) || '/';
+    const pathWithoutLocale = pathname.slice(`/${pathLocale}`.length) || '/';
+    let path = isDefaultLocale ? pathWithoutLocale : pathname;
     const targetUrl =
       pathLocale === 'ru'
         ? `${request.nextUrl.protocol}//${process.env.RUSSIAN_URL}${request.nextUrl.pathname}` ||
@@ -58,22 +59,34 @@ export function middleware(request: NextRequest) {
         : `${request.nextUrl.protocol}//${process.env.GLOBAL_URL}${request.nextUrl.pathname}` ||
           request.url;
 
-    if (request.nextUrl.search) pathWithoutLocale += request.nextUrl.search;
+    if (request.nextUrl.search) path += request.nextUrl.search;
 
     // console.log('==================0=================');
     // console.log({
     //   isDefaultLocale,
     //   pathWithoutLocale,
-    //   // url: new URL(pathWithoutLocale, targetUrl),
+    //   path,
+    //   url: new URL(path, targetUrl),
+    //   ruUrl: `${request.nextUrl.protocol}//${process.env.RUSSIAN_URL}${request.nextUrl.pathname}`,
+    //   globalUrl: `${request.nextUrl.protocol}//${process.env.GLOBAL_URL}${request.nextUrl.pathname}`,
     //   targetUrl
     // });
 
+    // response = NextResponse.redirect(new URL(path, targetUrl));
     if (isDefaultLocale) {
-      response = NextResponse.redirect(new URL(pathWithoutLocale, targetUrl));
+      response = NextResponse.redirect(new URL(path, targetUrl));
     } else {
+      // console.log('==================1.5=================');
+      // console.log({
+      //   cond: requestURL.hostname === nextHostName,
+      //   targetUrl,
+      //   requestURL,
+      //   nextHostName
+      // });
       response =
-        requestURL.hostname === nextHostName
-          ? response
+        requestURL.hostname === new URL(targetUrl).hostname
+          ? // ? response
+            NextResponse.rewrite(new URL(targetUrl))
           : NextResponse.redirect(targetUrl);
     }
 
@@ -112,7 +125,11 @@ export function middleware(request: NextRequest) {
     nextLocale = locale;
   }
 
-  if (!response) response = NextResponse.next();
+  if (!response) {
+    // console.log('---------not--------');
+
+    response = NextResponse.next();
+  }
 
   if (nextLocale) response.cookies.set('NEXT_LOCALE', nextLocale);
 
