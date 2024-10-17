@@ -28,71 +28,34 @@ export function middleware(request: NextRequest) {
   const {defaultLocale, locales} = i18Config;
 
   const pathname = request.nextUrl.pathname;
-  // const nextHostName = request.nextUrl.hostname;
-  // const local = request.nextUrl.locale;
   const requestURL = new URL(request.url);
 
   const pathLocale = locales.find(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  // console.log('===============start=================');
-  // console.log({
-  //   pathname,
-  //   pathLocale,
-  //   isDefaultLocale: pathLocale === defaultLocale,
-  //   locale: local,
-  //   domainLocale: request.nextUrl.domainLocale,
-  //   nextHostName,
-  //   host: request.nextUrl.host,
-  //   requestUrl: request.url
-  // });
-
   if (pathLocale) {
     const isDefaultLocale = pathLocale === defaultLocale;
     const pathWithoutLocale = pathname.slice(`/${pathLocale}`.length) || '/';
     let path = isDefaultLocale ? pathWithoutLocale : pathname;
-    const targetUrl =
+    const targetUrl = new URL(
       pathLocale === 'ru'
         ? `${request.nextUrl.protocol}//${process.env.RUSSIAN_URL}${request.nextUrl.pathname}` ||
           request.url
         : `${request.nextUrl.protocol}//${process.env.GLOBAL_URL}${request.nextUrl.pathname}` ||
-          request.url;
+          request.url
+    );
 
     if (request.nextUrl.search) path += request.nextUrl.search;
 
-    // console.log('==================0=================');
-    // console.log({
-    //   isDefaultLocale,
-    //   pathWithoutLocale,
-    //   path,
-    //   url: new URL(path, targetUrl),
-    //   ruUrl: `${request.nextUrl.protocol}//${process.env.RUSSIAN_URL}${request.nextUrl.pathname}`,
-    //   globalUrl: `${request.nextUrl.protocol}//${process.env.GLOBAL_URL}${request.nextUrl.pathname}`,
-    //   targetUrl
-    // });
-
-    // response = NextResponse.redirect(new URL(path, targetUrl));
     if (isDefaultLocale) {
       response = NextResponse.redirect(new URL(path, targetUrl));
     } else {
-      // console.log('==================1.5=================');
-      // console.log({
-      //   cond: requestURL.hostname === nextHostName,
-      //   targetUrl,
-      //   requestURL,
-      //   nextHostName
-      // });
       response =
-        requestURL.hostname === new URL(targetUrl).hostname
-          ? // ? response
-            NextResponse.rewrite(new URL(targetUrl))
+        requestURL.hostname === targetUrl.hostname
+          ? NextResponse.rewrite(targetUrl)
           : NextResponse.redirect(targetUrl);
     }
-
-    // response = isDefaultLocale
-    //   ? NextResponse.rewrite(new URL(pathWithoutLocale, targetUrl))
-    //   : NextResponse.redirect(targetUrl);
 
     nextLocale = pathLocale;
   } else {
@@ -109,15 +72,6 @@ export function middleware(request: NextRequest) {
     let newPath = `${locale}${pathname}`;
     if (request.nextUrl.search) newPath += request.nextUrl.search;
 
-    // console.log('==================1=================');
-    // console.log({
-    //   locale,
-    //   newPath,
-    //   nextUrlPathname: request.nextUrl.pathname,
-    //   ru: `${request.nextUrl.protocol}://${process.env.RUSSIAN_URL}${request.nextUrl.pathname}`,
-    //   // url: new URL(newPath, targetUrl),
-    //   targetUrl
-    // });
     response =
       locale === defaultLocale
         ? NextResponse.rewrite(new URL(newPath, targetUrl))
@@ -126,8 +80,6 @@ export function middleware(request: NextRequest) {
   }
 
   if (!response) {
-    // console.log('---------not--------');
-
     response = NextResponse.next();
   }
 
@@ -150,3 +102,46 @@ export const config = {
     '/((?!_next|_vercel|.*\\..*).*)'
   ]
 };
+
+// const nextHostName = request.nextUrl.hostname;
+// const local = request.nextUrl.locale;
+// console.log('===============start=================');
+// console.log({
+//   pathname,
+//   pathLocale,
+//   isDefaultLocale: pathLocale === defaultLocale,
+//   locale: local,
+//   domainLocale: request.nextUrl.domainLocale,
+//   nextHostName,
+//   host: request.nextUrl.host,
+//   requestUrl: request.url
+// });
+
+// console.log('==================0=================');
+// console.log({
+//   isDefaultLocale,
+//   pathWithoutLocale,
+//   path,
+//   url: new URL(path, targetUrl),
+//   ruUrl: `${request.nextUrl.protocol}//${process.env.RUSSIAN_URL}${request.nextUrl.pathname}`,
+//   globalUrl: `${request.nextUrl.protocol}//${process.env.GLOBAL_URL}${request.nextUrl.pathname}`,
+//   targetUrl
+// });
+
+// console.log('==================1.5=================');
+// console.log({
+//   cond: requestURL.hostname === nextHostName,
+//   targetUrl,
+//   requestURL,
+//   nextHostName
+// });
+
+// console.log('==================1=================');
+// console.log({
+//   locale,
+//   newPath,
+//   nextUrlPathname: request.nextUrl.pathname,
+//   ru: `${request.nextUrl.protocol}://${process.env.RUSSIAN_URL}${request.nextUrl.pathname}`,
+//   // url: new URL(newPath, targetUrl),
+//   targetUrl
+// });
